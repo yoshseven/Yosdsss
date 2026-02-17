@@ -6929,81 +6929,81 @@ reply(
 }
 }
 break;
-
 case 'tiktok': {
 try {
 
-if (!q || !q.includes("tiktok"))
-  return reply(`Exemplo: ${prefix}tiktok https://vm.tiktok.com/xxxx`);
+if (!q) {
+  return reply(`❌ Envie um link do TikTok.\n\nExemplo:\n${prefix}tiktok https://vm.tiktok.com/xxxx`);
+}
+
+if (!q.match(/tiktok\.com/)) {
+  return reply("❌ Link inválido do TikTok.");
+}
+
+await reply("🔎 Buscando vídeo...");
 
 const link = encodeURIComponent(q.trim());
 const res = await fetchJson(`https://tikwm.com/api/?url=${link}`);
 
-if (!res?.data) return reply("Não consegui pegar esse vídeo.");
+if (!res || !res.data || !res.data.play) {
+  return reply("❌ Não consegui obter esse vídeo.");
+}
+
+const data = res.data;
 
 const textoTik = `
-🎵 Autor: ${res.data.author?.nickname || "Desconhecido"}
-👁️ Views: ${res.data.play_count || "0"}
-❤️ Likes: ${res.data.digg_count || "0"}
+╔══════════════════════╗
+        ✦ YOSH 7 DOWNLOADER ✦
+╚══════════════════════╝
 
-💧 Escolha o formato para baixar:
+👤 Autor: ${data.author?.nickname || "Desconhecido"}
+🎵 Música: ${data.music_info?.title || "Original"}
+⏱️ Duração: ${data.duration || "0"}s
+
+━━━━━━━━━━━━━━━━━━
+
+👁️ ${data.play_count?.toLocaleString() || "0"} Views
+❤️ ${data.digg_count?.toLocaleString() || "0"} Likes
+💬 ${data.comment_count?.toLocaleString() || "0"} Comentários
+🔄 ${data.share_count?.toLocaleString() || "0"} Compart.
+
+━━━━━━━━━━━━━━━━━━
+
+📥 Escolha o formato abaixo:
 `;
 
-const listaTikTok = {
-title: "Download TikTok",
-sections: [
+const sections = [
 {
-title: "Formatos",
+title: "Formatos disponíveis",
 rows: [
 {
-title: "🎬 Baixar Vídeo",
-description: "Vídeo sem marca d’água",
+title: "🎬 Baixar Vídeo (Sem Marca)",
+description: "Download MP4 sem watermark",
 id: `${prefix}tiktok_video ${q.trim()}`
 },
 {
-title: "🎵 Baixar Áudio",
-description: "Som do vídeo em MP3",
+title: "🎵 Baixar Áudio (MP3)",
+description: "Extrair som do vídeo",
 id: `${prefix}tiktok_audio ${q.trim()}`
 }
 ]
 }
-]
-};
-
-const botoesTik = [
-{
-name: "single_select",
-buttonParamsJson: JSON.stringify(listaTikTok)
-}
 ];
 
-const media = await prepareWAMessageMedia(
-{ image: { url: res.data.cover } },
-{ upload: kasane.waUploadToServer }
-);
+const thumb = data.cover || "https://i.imgur.com/8fK4h6S.jpeg";
 
-const interactiveMsg = {
-cards: [
-{
-header: { hasMediaAttachment: true, imageMessage: media.imageMessage },
-headerType: "IMAGE",
-body: { text: textoTik },
-footer: { text: "💧 Yukira TikTok" },
-nativeFlowMessage: { buttons: botoesTik }
-}
-]
-};
-
-await kasane.relayMessage(from, {
-interactiveMessage: {
-body: { text: "💧 TikTok Downloader" },
-carouselMessage: interactiveMsg
-}
-}, {});
+await kasane.sendMessage(from, {
+image: { url: thumb },
+caption: textoTik,
+footer: "⚡ YOSH 7 • Universal System",
+title: "🚀 TikTok Downloader Premium",
+buttonText: "Selecionar Formato",
+sections: sections
+}, { quoted: m });
 
 } catch (e) {
-console.log(e);
-reply("Erro ao processar TikTok.");
+console.log("Erro TikTok:", e);
+reply("❌ Ocorreu um erro ao processar o TikTok.");
 }
 }
 break;
